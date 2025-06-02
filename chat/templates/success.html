@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Success</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>🎉 Product Added Successfully!</h1>
+
+    <h2>All Products</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                 <th>Price</th>
+                <!-- <th>Description</th>  -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for history in historys %}
+                <tr>
+                    <td>{{ history.input }}</td>
+                    <td>{{ history.response }}</td>
+                   <!--  <td>{{ product.description }}</td> -->
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">No products found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button onclick="home()">home</button>
+
+    <script>
+        function home() {
+            window.location.href = "{% url 'home' %}";
+        }
+    </script>
+</body>
+</html>

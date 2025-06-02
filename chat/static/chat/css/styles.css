@@ -1,0 +1,79 @@
+@keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+}
+
+.cyber-border {
+    border: 2px solid #0ff;
+    box-shadow: 0 0 15px #0ff,
+                inset 0 0 15px #0ff;
+}
+
+.matrix-bg {
+    background: 
+        linear-gradient(to bottom right, 
+            rgba(0, 20, 0, 0.9) 0%, 
+            rgba(0, 40, 0, 0.9) 100%),
+        repeating-linear-gradient(
+            0deg,
+            rgba(0, 255, 0, 0.2) 0px,
+            rgba(0, 255, 0, 0.2) 1px,
+            transparent 1px,
+            transparent 4px);
+}
+
+.hologram-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.hologram-effect::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg, 
+        transparent 20%, 
+        rgba(0, 255, 255, 0.1) 50%, 
+        transparent 80%
+    );
+    animation: scanline 4s linear infinite;
+    pointer-events: none;
+}
+
+.cyber-input {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #0ff;
+    color: #0ff;
+    text-shadow: 0 0 5px #0ff;
+}
+
+.cyber-button {
+    background: linear-gradient(45deg, #0ff, #0f0);
+    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+    transition: all 0.3s ease;
+}
+
+.cyber-button:hover {
+    filter: hue-rotate(90deg);
+    transform: scale(1.05);
+}
+
+.circuit-loader {
+    background: conic-gradient(#0ff, #0f0, #0ff);
+    mask: radial-gradient(farthest-side, #0000 calc(100% - 8px), #000 0);
+}
+
+
+
+
+
+
+
+
+
+
+

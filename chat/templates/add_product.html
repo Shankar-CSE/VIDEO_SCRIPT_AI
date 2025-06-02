@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Product</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Add New Product</h1>
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_name">Product Name:</label>
+            {{ form.input }}
+            {% if form.input.errors %}
+                <div class="error">{{ form.input.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="id_name">Product Name:</label>
+            {{ form.response }}
+            {% if form.response.errors %}
+                <div class="error">{{ form.response.errors }}</div>
+            {% endif %}
+        </div>
+<!--         
+        <div class="form-group">
+            <label for="id_price">Price:</label>
+            {{ form.price }}
+            {% if form.price.errors %}
+                <div class="error">{{ form.price.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_description">Description:</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <div class="error">{{ form.description.errors }}</div>
+            {% endif %}
+        </div>
+         -->
+        <button type="submit">Save Product</button>
+    </form>
+</body>
+</html>

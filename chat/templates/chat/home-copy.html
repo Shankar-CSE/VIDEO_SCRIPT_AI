@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroScript AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+   <link rel="stylesheet" href="{% static 'chat/css/styles.css' %}">
+
+</head>
+<body class="bg-black min-h-screen flex items-center justify-center p-4">
+    <div class="matrix-bg cyber-border hologram-effect rounded-lg p-8 max-w-2xl w-full relative overflow-hidden">
+        <!-- Scanline Overlay -->
+        <div class="absolute inset-0 pointer-events-none" style="background: repeating-linear-gradient(0deg, rgba(0, 255, 0, 0.1) 0px, rgba(0, 255, 0, 0.1) 1px, transparent 1px, transparent 4px);"></div>
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-green-400 mb-2">
+                VIDEO SCRIPT AI
+            </h1>
+            <p class="text-cyan-400 text-sm font-mono">>> VIDEO SCRIPT GENERATION v3.0</p>
+        </div>
+
+        <!-- Input Section -->
+        <form method="post" action="" id="script-form" class="space-y-6">
+            {% csrf_token %}
+            <div class="relative">
+                <textarea 
+                    id="id_content"
+                    name="content"
+                    class="cyber-input w-full p-4 rounded-sm font-mono placeholder-cyan-700 resize-none"
+                    placeholder="INITIALIZE CREATIVE PARAMETERS..."
+                    required
+                    rows="4"
+                    oninput="autoResize(this)"
+                >{{ form.content.value|default:'' }}</textarea>
+                <div class="absolute bottom-2 right-2 text-cyan-600 text-sm font-mono">
+                    [CHAR: ${this.value.length}/500]
+                </div>
+            </div>
+
+            <button 
+                type="submit"
+                class="cyber-button w-full py-3 text-black font-bold font-mono hover:shadow-cyan-500/50"
+                id="submit-btn"
+            >
+                <span class="drop-shadow-[0_0_2px_rgba(0,255,255,1)]">EXECUTE GENERATION</span>
+            </button>
+        </form>
+
+        <!-- Loading State -->
+        <div id="loading-spinner" class="hidden mt-6 text-center space-y-3">
+            <div class="circuit-loader w-16 h-16 rounded-full animate-spin mx-auto"></div>
+            <p class="text-cyan-400 font-mono animate-pulse" id="loading-text">LOADING: 0%</p>
+        </div>
+       
+
+        <!-- Response Section -->
+        <div id="response-container" class="mt-6 cyber-border rounded-sm p-4 bg-black/90">
+            {% if response_message %}
+                <div class="text-cyan-400 font-mono text-sm">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="text-green-400">>> OUTPUT_SUCCESS</div>
+                        <button 
+                            onclick="copyToClipboard()"
+                            class="text-cyan-600 hover:text-cyan-300 transition-colors font-mono text-xs"
+                        >
+                            [COPY_BUFFER]
+                        </button>
+                        <a href="{% url 'history' %}" target="_blank">
+                            <button 
+                            onclick="copyToClipboard()"
+                            class="text-cyan-600 hover:text-cyan-300 transition-colors font-mono text-xs"
+                        >
+                            [HISTORY]
+                        </button>
+                        </a>
+                    </div>
+                    <div class="whitespace-pre-wrap glow-text">
+                        {{ response_message }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Error Handling -->
+        {% if form.errors %}
+            <div class="mt-6 p-4 bg-red-900/50 border border-red-600 rounded-sm">
+                <div class="flex items-center gap-2 text-red-400 font-mono text-sm">
+                    <span class="text-red-500">>> ERROR:</span>
+                    INPUT_VALIDATION_FAILURE - PLEASE_RETRY
+                </div>
+            </div>
+        {% endif %}
+        <a href="{% url 'history' %}" target="_self">
+        <button 
+                type="submit"
+                class="mt-10 cyber-button w-full py-3 text-black font-bold font-mono hover:shadow-cyan-500/50"
+                id="submit-btn"
+            >
+                <span class="drop-shadow-[0_0_2px_rgba(0,255,255,1)]">History</span>
+            </button>
+        </a>
+    </div>
+    
+    <script src="{% static 'chat/js/scripts.js' %}"></script>
+    
+</body>
+</html>

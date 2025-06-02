@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroScript AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        .cosmic-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes warp {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0; }
+        }
+
+        .warp-core {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #0ff 10%, transparent 70%);
+            animation: warp 2s infinite;
+            filter: blur(10px);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Neural Network Initialization Screen -->
+    <div id="cosmic-loader" class="cosmic-loader">
+        <div class="warp-core"></div>
+        <div class="mt-8 text-cyan-400 font-mono text-xl">INITIALIZING NEURAL NETWORK</div>
+        <div class="w-64 h-1 bg-cyan-900 mt-4 rounded-full">
+            <div class="h-full bg-cyan-400 rounded-full transition-all duration-5000" id="load-progress"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loader = document.getElementById('cosmic-loader');
+            const progressBar = document.getElementById('load-progress');
+
+            // Start progress animation
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 2; // Increment progress
+                progressBar.style.width = `${progress}%`;
+                if (progress >= 100) {
+                    clearInterval(interval); // Stop when progress reaches 100%
+                }
+            }, 100); 
+
+            // Remove preloader after 5 seconds
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.remove();
+                    // Redirect or show content here
+                    window.location.href = "home"; // Replace with actual URL
+                }, 1000);
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

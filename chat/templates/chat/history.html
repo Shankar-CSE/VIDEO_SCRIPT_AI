@@ -1,0 +1,442 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat History | Scrollable Conversations</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'chat/css/styles.css' %}" />
+    <script
+      src="https://kit.fontawesome.com/your-kit-code.js"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+
+      .conversation-container {
+        height: 300px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #6366f1 #1f2937;
+      }
+      .conversation-container::-webkit-scrollbar {
+        width: 8px;
+      }
+      .conversation-container::-webkit-scrollbar-track {
+        background: #1f2937;
+        border-radius: 10px;
+      }
+      .conversation-container::-webkit-scrollbar-thumb {
+        background-color: #6366f1;
+        border-radius: 10px;
+        transition: background-color 0.3s;
+      }
+      .conversation-container::-webkit-scrollbar-thumb:hover {
+        background-color: #818cf8;
+      }
+      .user-message {
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        color: white;
+        border-radius: 18px 18px 0 18px;
+        animation: fadeIn 0.4s ease-out;
+      }
+      .ai-message {
+        background: #374151;
+        color: white;
+        border-radius: 18px 18px 18px 0;
+        animation: fadeIn 0.4s ease-out 0.1s both;
+      }
+      .message-time {
+        color: #9ca3af;
+        font-size: 0.75rem;
+      }
+      .history-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+        animation: fadeIn 0.5s ease-out;
+      }
+      .history-card:hover {
+        border-left-color: #6366f1;
+        transform: translateX(5px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+      }
+      .action-btn {
+        transition: all 0.3s ease;
+        opacity: 0.7;
+        transform: translateY(5px);
+      }
+      .history-card:hover .action-btn {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .action-btn:hover {
+        animation: bounce 0.5s ease;
+      }
+      .copy-btn:hover {
+        color: #a5b4fc;
+        transform: scale(1.1);
+      }
+      .delete-btn:hover {
+        color: #f87171;
+        animation: pulse 0.5s ease infinite;
+      }
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .toast.hide {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+      }
+      .confirmation-dialog {
+        animation: fadeIn 0.3s ease-out;
+        backdrop-filter: blur(5px);
+      }
+      .btn-3d {
+        transition: all 0.2s ease;
+        transform: translateY(0);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .btn-3d:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      }
+      .btn-3d:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 min-h-screen p-4 md:p-8 font-sans">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+      <i class="fas fa-check-circle"></i>
+      <span id="toast-message"></span>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div
+      id="confirmation-dialog"
+      class="fixed inset-0 flex items-center justify-center z-50 hidden confirmation-dialog"
+    >
+      <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+      <div
+        class="bg-gray-800 rounded-xl p-6 max-w-md w-full z-10 transform transition-all duration-300 scale-95 opacity-0"
+        id="dialog-content"
+      >
+        <div class="text-center">
+          <div
+            class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-500/20 mb-4"
+          >
+            <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-medium text-white mb-2">
+            Delete this conversation?
+          </h3>
+          <p class="text-gray-400 mb-6">
+            This action cannot be undone. All messages in this conversation will
+            be permanently removed.
+          </p>
+          <div class="flex justify-center gap-4">
+            <button
+              id="cancel-btn"
+              class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition btn-3d"
+            >
+              Cancel
+            </button>
+            <button
+              id="confirm-delete-btn"
+              class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition btn-3d"
+            >
+              <i class="fas fa-trash-alt mr-2"></i> Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+      <!-- Header -->
+      <div class="mb-8 text-center">
+        <h1
+          class="text-3xl md:text-4xl font-bold text-white mb-2 animate-fade-in"
+        >
+          <i class="fas fa-history text-indigo-400 mr-2"></i>
+          Chat History
+        </h1>
+        <p class="text-gray-400">Scroll through your past conversations</p>
+      </div>
+
+      <!-- History Entries -->
+      {% if history_entries %}
+      <div class="space-y-6">
+        {% for entry in history_entries %}
+        <div
+          class="history-card bg-gray-800 rounded-lg shadow-lg overflow-hidden relative"
+          data-entry-id="{{ entry.id }}"
+        >
+          <!-- Action Buttons - Always Visible -->
+          <div class="absolute top-[0px] right-[150px] flex gap-2">
+            <button
+              onclick="copyConversation('{{ entry.id }}')"
+              class="p-2 bg-gray-700 hover:bg-gray-600 rounded-full text-gray-300 hover:text-indigo-300 transition-all action-btn copy-btn"
+              title="Copy conversation"
+            >
+              <i class="fas fa-copy">copy</i>
+            </button>
+            <button
+              onclick="showDeleteDialog('{{ entry.id }}')"
+              class="p-2 bg-gray-700 hover:bg-gray-600 rounded-full text-gray-300 hover:text-red-400 transition-all action-btn delete-btn"
+              title="Delete conversation"
+            >
+              <i class="fas fa-trash-alt">delete</i>
+            </button>
+          </div>
+
+          <!-- Entry Header -->
+          <div class="bg-gray-700 px-5 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+              <span class="text-sm font-medium text-gray-300 mr-3">
+                <i class="far fa-calendar-alt text-indigo-400 mr-1"></i>
+                {{ entry.date_time|date:"M j, Y" }}
+              </span>
+              <span class="text-sm font-medium text-gray-300">
+                <i class="far fa-clock text-indigo-400 mr-1"></i>
+                {{ entry.date_time|date:"g:i A" }}
+              </span>
+            </div>
+            <span
+              class="text-xs bg-indigo-900 text-indigo-300 px-2 py-1 rounded-full"
+            >
+              Conversation #{{ forloop.revcounter }}
+            </span>
+          </div>
+
+          <!-- Scrollable Conversation Box -->
+          <div class="conversation-container p-4 space-y-4">
+            <!-- User Message -->
+            <div class="flex justify-end">
+              <div class="max-w-[80%]">
+                <div class="user-message px-4 py-3 shadow">
+                  <p>{{ entry.input }}</p>
+                  <div class="message-time text-right mt-1">
+                    {{ entry.date_time|date:"g:i A" }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Response -->
+            <div class="flex justify-start">
+              <div class="max-w-[80%]">
+                <div class="ai-message px-4 py-3 shadow">
+                  <pre class="whitespace-pre-wrap font-sans">
+{{ entry.response }}</pre
+                  >
+                  <div class="message-time text-right mt-1">
+                    {{ entry.date_time|date:"g:i A" }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-16 bg-gray-800 rounded-lg animate-fade-in">
+        <div
+          class="mx-auto w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-4"
+        >
+          <i class="fas fa-comment-slash text-3xl text-indigo-400"></i>
+        </div>
+        <h3 class="text-xl font-medium text-white mb-2">
+          No conversations yet
+        </h3>
+        <p class="text-gray-400 mb-6">
+          Your chat history will appear here after your first conversation.
+        </p>
+        <a
+          href="{% url 'home' %}"
+          class="inline-flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition btn-3d"
+        >
+          <i class="fas fa-comment mr-2"></i> Start Chatting
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Back Button -->
+      <div class="mt-10 text-center">
+        <a
+          href="{% url 'home' %}"
+          class="inline-flex items-center px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition btn-3d"
+        >
+          <i class="fas fa-arrow-left mr-2"></i> Back to Chat
+        </a>
+      </div>
+    </div>
+
+    <script>
+      // Current entry to delete
+      let currentEntryToDelete = null;
+
+      // Copy conversation to clipboard
+      function copyConversation(entryId) {
+        const entryElement = document.querySelector(
+          `[data-entry-id="${entryId}"]`
+        );
+        const textToCopy = `${
+          entryElement.querySelector(".user-message p").innerText
+        }\n\n${entryElement.querySelector(".ai-message pre").innerText}`;
+
+        navigator.clipboard
+          .writeText(textToCopy)
+          .then(() => {
+            showToast("Conversation copied to clipboard!", "success");
+          })
+          .catch((err) => {
+            showToast("Failed to copy conversation", "error");
+            console.error("Failed to copy: ", err);
+          });
+      }
+
+      // Show delete confirmation dialog
+      function showDeleteDialog(entryId) {
+        currentEntryToDelete = entryId;
+        const dialog = document.getElementById("confirmation-dialog");
+        const content = document.getElementById("dialog-content");
+
+        dialog.classList.remove("hidden");
+        setTimeout(() => {
+          content.classList.remove("opacity-0", "scale-95");
+          content.classList.add("opacity-100", "scale-100");
+        }, 10);
+      }
+
+      // Hide delete confirmation dialog
+      function hideDeleteDialog() {
+        const dialog = document.getElementById("confirmation-dialog");
+        const content = document.getElementById("dialog-content");
+
+        content.classList.remove("opacity-100", "scale-100");
+        content.classList.add("opacity-0", "scale-95");
+
+        setTimeout(() => {
+          dialog.classList.add("hidden");
+        }, 300);
+      }
+
+      // Delete conversation
+      function deleteConversation() {
+        if (!currentEntryToDelete) return;
+
+        // Here you would typically make an AJAX call to delete the entry
+        // For now, we'll just simulate it
+        setTimeout(() => {
+          showToast("Conversation deleted", "success");
+          // In a real app, you would remove the element or reload the page
+          // document.querySelector(`[data-entry-id="${currentEntryToDelete}"]`).remove();
+          hideDeleteDialog();
+        }, 500);
+      }
+
+      // Show toast notification
+      function showToast(message, type = "success") {
+        const toast = document.getElementById("toast");
+        const toastMessage = document.getElementById("toast-message");
+        const icon = toast.querySelector("i");
+
+        // Set message and icon based on type
+        toastMessage.textContent = message;
+
+        if (type === "success") {
+          toast.style.background = "linear-gradient(135deg, #6366f1, #8b5cf6)";
+          icon.className = "fas fa-check-circle";
+        } else {
+          toast.style.background = "linear-gradient(135deg, #ef4444, #f97316)";
+          icon.className = "fas fa-exclamation-circle";
+        }
+
+        // Show toast
+        toast.classList.remove("hide");
+        toast.classList.add("show");
+
+        // Hide after delay
+        setTimeout(() => {
+          toast.classList.remove("show");
+          toast.classList.add("hide");
+        }, 3000);
+      }
+
+      // Event listeners
+      document.addEventListener("DOMContentLoaded", () => {
+        // Dialog buttons
+        document
+          .getElementById("cancel-btn")
+          .addEventListener("click", hideDeleteDialog);
+        document
+          .getElementById("confirm-delete-btn")
+          .addEventListener("click", deleteConversation);
+
+        // Close dialog when clicking outside
+        document
+          .getElementById("confirmation-dialog")
+          .addEventListener("click", (e) => {
+            if (e.target === document.getElementById("confirmation-dialog")) {
+              hideDeleteDialog();
+            }
+          });
+      });
+    </script>
+  </body>
+</html>

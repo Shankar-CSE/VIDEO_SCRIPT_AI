@@ -1,0 +1,184 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Script AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .ai-gradient {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+        .ai-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .ai-button {
+            background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+            transition: all 0.2s ease;
+        }
+        .ai-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+        }
+        .loading-dots:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+    </style>
+</head>
+<body class="bg-[#353839] min-h-screen flex items-center justify-center p-4">
+    <div class="ai-gradient ai-shadow rounded-xl p-8 max-w-2xl w-full">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="flex justify-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-1">Video Script AI</h1>
+            <p class="text-gray-600">Generate professional video scripts with AI</p>
+        </div>
+
+        <!-- Input Section -->
+        <form method="post" action="" id="script-form" class="space-y-6">
+            {% csrf_token %}
+            <div class="relative">
+                <textarea 
+                    id="id_content"
+                    name="content"
+                    class="w-full p-4 bg-white rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all placeholder-gray-400 resize-none"
+                    placeholder="Describe your video topic, tone, and key points..."
+                    required
+                    rows="4"
+                    oninput="autoResize(this)"
+                >{{ form.content.value|default:'' }}</textarea>
+                <div class="absolute bottom-3 right-3 text-gray-400 text-sm">
+                    {{ form.content.value|length|default:0 }}/500
+                </div>
+            </div>
+
+            <button 
+                type="submit"
+                class="ai-button w-full py-3 text-white font-medium rounded-lg"
+                id="submit-btn"
+            >
+                Generate Script
+            </button>
+        </form>
+
+        <!-- Loading State -->
+        <div id="loading-spinner" class="hidden mt-6 text-center space-y-4">
+            <div class="flex justify-center">
+                <div class="w-10 h-10 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin"></div>
+            </div>
+            <p class="text-gray-600" id="loading-text">Creating your script<span class="loading-dots"></span></p>
+        </div>
+
+        <!-- Response Section -->
+        <div id="response-container" class="mt-6 bg-white rounded-lg border border-gray-200 p-6">
+            {% if response_message %}
+                <div class="prose prose-blue max-w-none">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Your Generated Script</h3>
+                        <div class="flex space-x-3">
+                            <button 
+                                onclick="copyToClipboard()"
+                                class="text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                </svg>
+                                Copy
+                            </button>
+                            <a href="{% url 'history' %}" target="_blank" class="text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                History
+                            </a>
+                        </div>
+                    </div>
+                    <div id="response" class="text-gray-700 whitespace-pre-wrap">
+                        {{ response_message }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Error Handling -->
+        {% if form.errors %}
+            <div class="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
+                <div class="flex items-center text-red-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    Please enter valid input (500 characters maximum)
+                </div>
+            </div>
+        {% endif %}
+        
+        <a href="{% url 'history' %}" class="block mt-6">
+            <button class="w-full py-3 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                View History
+            </button>
+        </a>
+    </div>
+    
+    <script src="{% static 'chat/js/scripts.js' %}"></script>
+
+    <script>
+        
+        // Function to parse and format the response message
+function parseResponseMessage() {
+    const responseElement = document.getElementById('response');
+    if (!responseElement) return;
+
+    const responseText = responseElement.textContent.trim();
+    
+    // Split the response into sections if it contains line breaks
+    const sections = responseText.split('\n').filter(section => section.trim());
+    
+    // Format and display the parsed sections
+    const formattedResponse = sections.map(section => {
+        return `<p>${section}</p>`;
+    }).join('');
+    
+    responseElement.innerHTML = formattedResponse;
+}
+
+// Copy response to clipboard
+function copyToClipboard() {
+    const responseText = document.getElementById('response').textContent;
+    navigator.clipboard.writeText(responseText).then(() => {
+        // Optional: Show copy confirmation
+        const copyButton = document.querySelector('button[onclick="copyToClipboard()"]');
+        const originalText = copyButton.innerHTML;
+        copyButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Copied!
+        `;
+        setTimeout(() => {
+            copyButton.innerHTML = originalText;
+        }, 2000);
+    });
+}
+
+// Call parseResponseMessage when the page loads
+document.addEventListener('DOMContentLoaded', parseResponseMessage);        
+    </script>
+</body>
+</html>
